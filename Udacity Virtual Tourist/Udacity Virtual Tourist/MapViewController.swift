@@ -70,12 +70,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             
             let dictionary = ["latitude": coordinate.latitude, "longitude": coordinate.longitude]
             let pin = Pin(dictionary: dictionary, context: sharedContext)
-            var error = NSErrorPointer()
-            sharedContext.save(error)
-            
-            if error != nil {
-                println("Error saving pin \(error)")
-            }
+            CoreDataStackManager.sharedInstance().saveContext()
         }
     }
  
@@ -86,14 +81,14 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     }
    
     // MARK: Fetch all
-    func fetchAllPins() -> [Pin] {
+    func fetchAllPins()  -> [Pin] {
         let error: NSErrorPointer = nil
         let fetchRequest = NSFetchRequest(entityName: "Pin")
         let results = sharedContext.executeFetchRequest(fetchRequest, error: error)
         if error != nil {
             println("Error in fetchAllPins(): \(error)")
         }
-        return results as! [Pin]
+        return results! as! [Pin]
     }
    
     // MARK: - Map region save and retrieve

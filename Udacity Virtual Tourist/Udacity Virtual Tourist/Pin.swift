@@ -28,6 +28,10 @@ class Pin: NSManagedObject {
         }
     }
 
+    override init(entity: NSEntityDescription, insertIntoManagedObjectContext context: NSManagedObjectContext?) {
+        super.init(entity: entity, insertIntoManagedObjectContext: context)
+    }
+        
     init(dictionary: [String : AnyObject], context: NSManagedObjectContext) {
         let entity = NSEntityDescription.entityForName("Pin", inManagedObjectContext: context)
         super.init(entity: entity!, insertIntoManagedObjectContext: context)
