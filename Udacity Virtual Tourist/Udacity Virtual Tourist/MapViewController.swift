@@ -41,6 +41,16 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         }
     }
     
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController!.navigationBarHidden = true
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController!.navigationBarHidden = false
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -56,7 +66,13 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         annotation.coordinate = coordinate
         
         switch recognizer.state {
-        case .Changed, .Ended:
+        case .Ended:
+            mapView.removeAnnotation(floatingPin)
+            let dictionary = ["latitude": coordinate.latitude, "longitude": coordinate.longitude]
+            let pin = Pin(dictionary: dictionary, context: sharedContext)
+            CoreDataStackManager.sharedInstance().saveContext()
+            mapView.addAnnotation(pin)
+        case .Changed:
             mapView.removeAnnotation(floatingPin)
             fallthrough
         default:
@@ -66,9 +82,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
        
         if recognizer.state == .Ended {
             
-            let dictionary = ["latitude": coordinate.latitude, "longitude": coordinate.longitude]
-            let pin = Pin(dictionary: dictionary, context: sharedContext)
-            CoreDataStackManager.sharedInstance().saveContext()
         }
     }
  
@@ -87,6 +100,18 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             println("Error in fetchAllPins(): \(error)")
         }
         return results! as! [Pin]
+    }
+    
+    func mapView(mapView: MKMapView!, didSelectAnnotationView view: MKAnnotationView!) {
+        mapView.deselectAnnotation(view.annotation, animated: false)
+        performSegueWithIdentifier("showAlbum", sender: view.annotation)
+    }
+    
+    // MARK: Segue to Album
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        var vc = segue.destinationViewController.childViewControllers[0] as! AlbumViewController
+        vc.pin = sender as! Pin
     }
    
     // MARK: - Map region save and retrieve

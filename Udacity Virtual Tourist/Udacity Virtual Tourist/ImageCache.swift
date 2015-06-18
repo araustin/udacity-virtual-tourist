@@ -11,6 +11,10 @@ import UIKit
 
 class ImageCache {
     
+    struct Static {
+        static let instance = ImageCache()
+    }
+    
     private var inMemoryCache = NSCache()
     
     // MARK: - Retreiving images
@@ -65,5 +69,24 @@ class ImageCache {
         let fullURL = documentsDirectoryURL.URLByAppendingPathComponent(identifier)
         
         return fullURL.path!
+    }
+    
+    // MARK: Image retrieval
+    
+    func downloadImage(imageUrl: String, didComplete: (imageData: NSData?, error: NSError?) ->  Void) -> NSURLSessionTask {
+        let url = NSURL(string: imageUrl)!
+        let request = NSURLRequest(URL: url)
+        let session = NSURLSession.sharedSession()
+        let task = session.dataTaskWithRequest(request) {data, response, downloadError in
+            
+            if let error = downloadError {
+                didComplete(imageData: nil, error: error)
+            } else {
+                didComplete(imageData: data, error: nil)
+            }
+        }
+        
+        task.resume()
+        return task
     }
 }

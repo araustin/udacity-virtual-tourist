@@ -24,7 +24,7 @@ class Photo: NSManagedObject {
     struct Config {
         static let SearchURL = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=fe55c54bf73041bb22103a594eefe684&format=json&nojsoncallback=1"
         static let Radius = 1 /* kilometers */
-        static let flickrURLTemplate = ["https://farm", "{farm-id}", ".staticflickr.com/", "{server-id}", "{id}", "_", "{secret}", "_q.jpg"]
+        static let flickrURLTemplate = ["https://farm", "{farm-id}", ".staticflickr.com/", "{server-id}", "/", "{id}", "_", "{secret}", "_q.jpg"]
     }
     
 
@@ -42,29 +42,7 @@ class Photo: NSManagedObject {
         url = dictionary[Keys.URL] as! String
     }
     
-
-    
-    // MARK: Image retrieval from iOS Persistence course TheMovieDB.swift
-    
-    func taskForImageWithSize(imageUrl: String, completionHandler: (imageData: NSData?, error: NSError?) ->  Void) -> NSURLSessionTask {
-        
-        let url = NSURL(string: imageUrl)!
-        let request = NSURLRequest(URL: url)
-        let session = NSURLSession.sharedSession()
-        let task = session.dataTaskWithRequest(request) {data, response, downloadError in
-            
-            if let error = downloadError {
-                completionHandler(imageData: nil, error: error)
-            } else {
-                completionHandler(imageData: data, error: nil)
-            }
-        }
-        
-        task.resume()
-        
-        return task
-    }
-    
+   
     //MARK: - Flickr image search
     
     /**
@@ -74,7 +52,8 @@ class Photo: NSManagedObject {
     :param: didComplete Callback when search request compeletes
     */
     class func search(pin: Pin, didComplete: (success: Bool) -> Void) {
-        let url = "Config.SearchURL&lat=\(pin.coordinate.latitude)&lon=\(pin.coordinate.longitude)&radius=\(Config.Radius)"
+        let url = "\(Config.SearchURL)&lat=\(pin.coordinate.latitude)&lon=\(pin.coordinate.longitude)&radius=\(Config.Radius)"
+        println(url)
         let request = NSURLRequest(URL: NSURL(string: url)!)
         let session = NSURLSession.sharedSession()
         let task = session.dataTaskWithRequest(request) { data, response, error in
@@ -99,6 +78,7 @@ class Photo: NSManagedObject {
                     
                     let photoUrl = Photo.buildFlickrUrl(photo as! [String : AnyObject])
                     let photo = Photo(dictionary: ["url": photoUrl], context: pin.managedObjectContext!)
+                    photo.pin = pin
                     
                     var error = NSErrorPointer()
                     pin.managedObjectContext?.save(error)
@@ -115,10 +95,10 @@ class Photo: NSManagedObject {
     
     class func buildFlickrUrl(photo: [String: AnyObject]) -> String {
         var photoUrlParts = Config.flickrURLTemplate
-        photoUrlParts[1] = photo["farm"] as! String
-        photoUrlParts[3] = photo["search"] as! String
-        photoUrlParts[4] = photo["id"] as! String
-        photoUrlParts[6] = photo["secret"] as! String
+        photoUrlParts[1] = String(photo["farm"] as! Int)
+        photoUrlParts[3] = photo["server"] as! String
+        photoUrlParts[5] = photo["id"] as! String
+        photoUrlParts[7] = photo["secret"] as! String
 
         return "".join(photoUrlParts)
     }

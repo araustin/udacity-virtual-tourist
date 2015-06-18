@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="7706" systemVersion="14D136" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="7706" systemVersion="14D136" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="OKD-AN-epZ">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7703"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
@@ -47,7 +47,7 @@
                     </connections>
                 </pongPressGestureRecognizer>
             </objects>
-            <point key="canvasLocation" x="712" y="509"/>
+            <point key="canvasLocation" x="1524" y="509"/>
         </scene>
         <!--Album-->
         <scene sceneID="Bli-E7-mgk">
@@ -66,6 +66,7 @@
                             </mapView>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="aLt-n2-bwv">
                                 <rect key="frame" x="0.0" y="150" width="600" height="420"/>
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="yzG-PD-VfG">
                                     <size key="itemSize" width="50" height="50"/>
                                     <size key="headerReferenceSize" width="0.0" height="0.0"/>
@@ -77,14 +78,19 @@
                                         <rect key="frame" x="0.0" y="0.0" width="50" height="50"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
-                                            <rect key="frame" x="0.0" y="0.0" width="80" height="80"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="166" height="166"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="37M-rq-hQc">
-                                                    <rect key="frame" x="8" y="8" width="64" height="64"/>
+                                                    <rect key="frame" x="8" y="8" width="150" height="150"/>
+                                                    <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="150" id="G0b-Gm-pAb"/>
+                                                        <constraint firstAttribute="width" constant="150" id="HkI-re-IA4"/>
+                                                    </constraints>
                                                 </imageView>
-                                                <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="0gh-tx-KD1">
-                                                    <rect key="frame" x="30" y="30" width="20" height="20"/>
+                                                <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="0gh-tx-KD1">
+                                                    <rect key="frame" x="65" y="64" width="37" height="37"/>
                                                 </activityIndicatorView>
                                             </subviews>
                                             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -92,12 +98,8 @@
                                         <constraints>
                                             <constraint firstAttribute="centerY" secondItem="37M-rq-hQc" secondAttribute="centerY" id="9Mf-GM-NGx"/>
                                             <constraint firstAttribute="centerX" secondItem="37M-rq-hQc" secondAttribute="centerX" id="GmF-tB-VD1"/>
-                                            <constraint firstItem="37M-rq-hQc" firstAttribute="top" secondItem="GSZ-Nm-ss4" secondAttribute="topMargin" id="IaM-nz-eHV"/>
-                                            <constraint firstAttribute="trailingMargin" secondItem="37M-rq-hQc" secondAttribute="trailing" id="KJr-TT-mPW"/>
-                                            <constraint firstAttribute="centerY" secondItem="0gh-tx-KD1" secondAttribute="centerY" id="dWn-Y4-SGk"/>
-                                            <constraint firstAttribute="centerX" secondItem="0gh-tx-KD1" secondAttribute="centerX" id="wT6-mh-Bg8"/>
                                         </constraints>
-                                        <size key="customSize" width="80" height="80"/>
+                                        <size key="customSize" width="166" height="166"/>
                                         <connections>
                                             <outlet property="activityIndicator" destination="0gh-tx-KD1" id="zmY-EY-d1o"/>
                                             <outlet property="imageView" destination="37M-rq-hQc" id="ZF7-o5-hGv"/>
@@ -129,7 +131,7 @@
                             <constraint firstItem="aLt-n2-bwv" firstAttribute="top" secondItem="oRG-JU-tut" secondAttribute="bottom" id="xwM-dw-JHV"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="Fpo-8X-8oO"/>
+                    <navigationItem key="navigationItem" id="9Xr-hM-bpn"/>
                     <connections>
                         <outlet property="collectionView" destination="aLt-n2-bwv" id="jGN-u2-zGx"/>
                         <outlet property="mapView" destination="oRG-JU-tut" id="ta5-eD-Qi1"/>
@@ -156,6 +158,24 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="AWl-8X-p32" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-241" y="1373"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="O4L-X5-yaS">
+            <objects>
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="OKD-AN-epZ" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="Gyd-eI-3fk">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="AXe-Mt-T1K"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Yyu-T5-xRM" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="712" y="509"/>
         </scene>
     </scenes>
 </document>
