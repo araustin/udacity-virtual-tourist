@@ -37,9 +37,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         
         let pins = fetchAllPins()
         for pin in pins {
-            var annotation = MKPointAnnotation()
-            annotation.coordinate = pin.coordinate
-            mapView.addAnnotation(annotation)
+            mapView.addAnnotation(pin)
         }
     }
     

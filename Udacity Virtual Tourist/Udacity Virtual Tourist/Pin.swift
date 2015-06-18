@@ -11,7 +11,7 @@ import CoreData
 import MapKit
 
 @objc(Pin)
-class Pin: NSManagedObject {
+class Pin: NSManagedObject, MKAnnotation {
 
     struct Keys {
         static let Latitude = "latitude"

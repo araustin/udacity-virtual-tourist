@@ -19,6 +19,7 @@
 		46FE89CE1B30D89D003DD39F /* Photo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46FE89CD1B30D89D003DD39F /* Photo.swift */; };
 		46FE89D01B30D8D2003DD39F /* Pin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46FE89CF1B30D8D2003DD39F /* Pin.swift */; };
 		46FE89D31B31DDE6003DD39F /* VirtualTourist.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 46FE89D11B31DDE6003DD39F /* VirtualTourist.xcdatamodeld */; };
+		46FE89DB1B332DC4003DD39F /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46FE89DA1B332DC4003DD39F /* ImageCache.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +49,7 @@
 		46FE89CD1B30D89D003DD39F /* Photo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Photo.swift; sourceTree = "<group>"; };
 		46FE89CF1B30D8D2003DD39F /* Pin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Pin.swift; sourceTree = "<group>"; };
 		46FE89D21B31DDE6003DD39F /* VirtualTourist.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = VirtualTourist.xcdatamodel; sourceTree = "<group>"; };
+		46FE89DA1B332DC4003DD39F /* ImageCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +142,7 @@
 		46FE89C91B30D847003DD39F /* models */ = {
 			isa = PBXGroup;
 			children = (
+				46FE89DA1B332DC4003DD39F /* ImageCache.swift */,
 				46FE89CD1B30D89D003DD39F /* Photo.swift */,
 				46FE89CF1B30D8D2003DD39F /* Pin.swift */,
 			);
@@ -257,6 +260,7 @@
 				46FE89CE1B30D89D003DD39F /* Photo.swift in Sources */,
 				46FE89721B309872003DD39F /* MapViewController.swift in Sources */,
 				46FE89C51B30C21C003DD39F /* AlbumViewController.swift in Sources */,
+				46FE89DB1B332DC4003DD39F /* ImageCache.swift in Sources */,
 				46FE89D01B30D8D2003DD39F /* Pin.swift in Sources */,
 				46FE89D31B31DDE6003DD39F /* VirtualTourist.xcdatamodeld in Sources */,
 				46FE89C31B30BF5A003DD39F /* CoreDataStackManager.swift in Sources */,
