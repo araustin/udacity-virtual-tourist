@@ -10,18 +10,15 @@ import UIKit
 import MapKit
 import CoreData
 
-/**
-Flicker API
-fab57d67573d42d644953ca8b54c7f6e
 
-Secret:
-d71749318920aaa0
-*/
 class MapViewController: UIViewController, MKMapViewDelegate {
     
     struct Keys {
         static let region = "region"
     }
+    
+    /// Image cache
+    var cache = ImageCache.Static.instance
     
     /// Shows where the pin would be dropped once the touch ends
     var floatingPin: MKPointAnnotation?
@@ -72,16 +69,13 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             let pin = Pin(dictionary: dictionary, context: sharedContext)
             CoreDataStackManager.sharedInstance().saveContext()
             mapView.addAnnotation(pin)
+            pin.loadPhotos()
         case .Changed:
             mapView.removeAnnotation(floatingPin)
             fallthrough
         default:
             floatingPin = annotation
             mapView.addAnnotation(annotation)
-        }
-       
-        if recognizer.state == .Ended {
-            
         }
     }
  
@@ -104,6 +98,12 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     func mapView(mapView: MKMapView!, didSelectAnnotationView view: MKAnnotationView!) {
         mapView.deselectAnnotation(view.annotation, animated: false)
+        
+        // make sure the photos are loaded or loading
+        let pin = view.annotation as! Pin
+        if pin.photosLoadState == .NotLoaded {
+            pin.loadPhotos()
+        }
         performSegueWithIdentifier("showAlbum", sender: view.annotation)
     }
     

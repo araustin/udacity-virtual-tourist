@@ -6,6 +6,8 @@
 //  Copyright (c) 2015 Udacity. All rights reserved.
 //
 //  From the iOS Persistance and Core Data course material
+//  I removed the in memory cache to follow the rubric as literally as possible
+//  The identifier is path in the documents directory (It is also the Flickr url)
 
 import UIKit
 
@@ -14,8 +16,6 @@ class ImageCache {
     struct Static {
         static let instance = ImageCache()
     }
-    
-    private var inMemoryCache = NSCache()
     
     // MARK: - Retreiving images
     
@@ -28,11 +28,6 @@ class ImageCache {
         
         let path = pathForIdentifier(identifier!)
         var data: NSData?
-        
-        // First try the memory cache
-        if let image = inMemoryCache.objectForKey(path) as? UIImage {
-            return image
-        }
         
         // Next Try the hard drive
         if let data = NSData(contentsOfFile: path) {
@@ -49,17 +44,21 @@ class ImageCache {
         
         // If the image is nil, remove images from the cache
         if image == nil {
-            inMemoryCache.removeObjectForKey(path)
             NSFileManager.defaultManager().removeItemAtPath(path, error: nil)
             return
         }
         
-        // Otherwise, keep the image in memory
-        inMemoryCache.setObject(image!, forKey: path)
-        
         // And in documents directory
         let data = UIImagePNGRepresentation(image!)
         data.writeToFile(path, atomically: true)
+    }
+    
+    /**
+    Deletes the image from the cache and documents directory
+    */
+    func deleteImage(identifier: String) {
+        // call store with nil for the image deletes the image
+        storeImage(nil, withIdentifier: identifier)
     }
     
     // MARK: - Helper
