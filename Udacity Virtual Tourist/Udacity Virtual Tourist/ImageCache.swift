@@ -7,7 +7,7 @@
 //
 //  From the iOS Persistance and Core Data course material
 //  I removed the in memory cache to follow the rubric as literally as possible
-//  The identifier is path in the documents directory (It is also the Flickr url)
+//  The identifier is path in the documents directory (It is also the Flickr photo id)
 
 import UIKit
 

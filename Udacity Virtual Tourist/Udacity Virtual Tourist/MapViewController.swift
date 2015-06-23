@@ -17,9 +17,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         static let region = "region"
     }
     
-    /// Image cache
-    var cache = ImageCache.Static.instance
-    
     /// Shows where the pin would be dropped once the touch ends
     var floatingPin: MKPointAnnotation?
     
@@ -69,7 +66,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             let pin = Pin(dictionary: dictionary, context: sharedContext)
             CoreDataStackManager.sharedInstance().saveContext()
             mapView.addAnnotation(pin)
-            pin.loadPhotos()
+            pin.loadPhotos() { success in }
         case .Changed:
             mapView.removeAnnotation(floatingPin)
             fallthrough
@@ -101,9 +98,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         
         // make sure the photos are loaded or loading
         let pin = view.annotation as! Pin
-        if pin.photosLoadState == .NotLoaded {
-            pin.loadPhotos()
-        }
         performSegueWithIdentifier("showAlbum", sender: view.annotation)
     }
     

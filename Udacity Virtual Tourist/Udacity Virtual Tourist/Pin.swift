@@ -11,10 +11,6 @@ import CoreData
 import MapKit
 
 
-enum DownloadStatus {
-    case NotLoaded, Loading, Loaded
-}
-
 @objc(Pin)
 class Pin: NSManagedObject, MKAnnotation {
 
@@ -33,9 +29,6 @@ class Pin: NSManagedObject, MKAnnotation {
     @NSManaged var latitude: NSNumber
     @NSManaged var longitude: NSNumber
     @NSManaged var photos: [Photo]
-    
-    /// Whether all the photos have been downloaded
-    var photosLoadState: DownloadStatus = .NotLoaded
     
     /// What page of the results to load
     var page = 1
@@ -59,20 +52,24 @@ class Pin: NSManagedObject, MKAnnotation {
     }
     
     /// Loads the photos associated with the pin
-    func loadPhotos(getNextPage: Bool = false) {
-        photosLoadState = .Loading
+    func loadPhotos(getNextPage: Bool = false, didCompleteSearch: (success: Bool) -> Void) {
         if getNextPage {
             page++
         }
         searchFlickr() { success in
-            self.preloadPhotos()
+            didCompleteSearch(success: success)
+            
+            let priority = DISPATCH_QUEUE_PRIORITY_DEFAULT
+            dispatch_async(dispatch_get_global_queue(priority, 0)) {
+                self.preloadPhotos()
+            }
         }
     }
     
     /// Deletes the current photo set
     func deletePhotos() {
         for photo in photos {
-            ImageCache.Static.instance.deleteImage(photo.url)
+            photo.delete()
         }
     }
 
@@ -115,8 +112,10 @@ class Pin: NSManagedObject, MKAnnotation {
                 success = true
                 for photo in photos {
                     
+                    let file = photo["id"] as! String
                     let photoUrl = Photo.buildFlickrUrl(photo as! [String : AnyObject])
-                    let photo = Photo(dictionary: ["url": photoUrl], context: self.managedObjectContext!)
+                    let dict = ["url": photoUrl, "file": file]
+                    let photo = Photo(dictionary: dict, context: self.managedObjectContext!)
                     photo.pin = self
                     
                     var error = NSErrorPointer()
@@ -137,19 +136,19 @@ class Pin: NSManagedObject, MKAnnotation {
         
         var unloadedPhotos = photos.count
         for photo in photos {
+            photo.downloadStatus = .Loading
             let task = ImageCache.Static.instance.downloadImage(photo.url) { imageData, error in
                 
                 // keep track of the loaded photos
                 unloadedPhotos--
-                if unloadedPhotos == 0 {
-                    NSNotificationCenter.defaultCenter().postNotificationName(Config.AllPhotosLoadedForPinNotification, object: self)
-                    self.photosLoadState = .Loaded
-                }
                 if imageData == nil {
                     return
                 }
                 let image = UIImage(data: imageData!)
-                ImageCache.Static.instance.storeImage(image, withIdentifier: photo.url)
+                photo.saveImage(image!)
+                if unloadedPhotos == 0 {
+                    NSNotificationCenter.defaultCenter().postNotificationName(Config.AllPhotosLoadedForPinNotification, object: self)
+                }
             }
         }
     }

@@ -26,23 +26,25 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        var error = NSErrorPointer()
-        fetchedResultsController.performFetch(error)
-        if error != nil {
-            println("Error fetching \(error)")
-        }
-        
         fetchedResultsController.delegate = self
+        fetch()
         
         collectionView.delegate = self
         collectionView.dataSource = self
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "didLoadAllPhotos:", name: Pin.Config.AllPhotosLoadedForPinNotification, object: pin)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "didLoadPhoto:", name: Photo.Config.PhotoLoadedForPinNotification, object: nil)
     }
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
-        newCollectionButton.enabled = pin.photosLoadState == .Loaded
+        var allPhotosLoaded = true
+        for photo in pin.photos {
+            if photo.downloadStatus != .Loaded {
+                allPhotosLoaded = false
+            }
+        }
+        newCollectionButton.enabled = allPhotosLoaded
     }
     
     override func didReceiveMemoryWarning() {
@@ -50,13 +52,40 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         // Dispose of any resources that can be recreated.
     }
     
+    /// use fetched result controller to fetch
+    func fetch() {
+        var error = NSErrorPointer()
+        fetchedResultsController.performFetch(error)
+        if error != nil {
+            println("Error fetching \(error)")
+        }
+    }
+    
     func didLoadAllPhotos(sender: AnyObject) {
+        println("DID LOAD ALL PHOTOS")
         newCollectionButton.enabled = true
+        collectionView.layoutSubviews()
+        collectionView.reloadData()
+    }
+    
+    func didLoadPhoto(photo: Photo) {
+        if let indexPath = fetchedResultsController.indexPathForObject(photo) {
+            dispatch_async(dispatch_get_main_queue()) {
+                println("PHOTO LOAD \(photo.file)")
+                self.collectionView.reloadItemsAtIndexPaths([indexPath])
+            }
+        }
     }
     
     @IBAction func didPressNewCollection(sender: UIButton) {
+        newCollectionButton.enabled = false
         pin.deletePhotos()
-        pin.loadPhotos(getNextPage: true)
+        pin.loadPhotos(getNextPage: true) { success in
+            self.fetch()
+            dispatch_async(dispatch_get_main_queue()) {
+                self.collectionView.reloadData()
+            }
+        }
     }
     // MARK: - Collection view datasource implementation
     
@@ -66,11 +95,11 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
         cell.imageView.image = UIImage(named: "no-image")
         cell.activityIndicator.startAnimating()
-        if let image = cache.imageWithIdentifier(photo.url) {
+        if let image = cache.imageWithIdentifier(photo.file) {
             println("IMAGE IN CACHE \(photo.url)")
             cell.activityIndicator.stopAnimating()
             cell.imageView.image = image
-        } else {
+        } else if photo.downloadStatus == .NotLoaded {
             println("NO CACHE \(photo.url)")
             getRemoteImage(cell, photo: photo)
         }
@@ -79,8 +108,34 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
     
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         let sectionInfo = self.fetchedResultsController.sections![section] as! NSFetchedResultsSectionInfo
+        println("NUM ITEM \(sectionInfo.numberOfObjects)")
         return sectionInfo.numberOfObjects
     }
+    
+    /// Delete the item when pressed
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
+        if photo.downloadStatus == .Loaded {
+            photo.delete()
+        }
+    }
+    
+    func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
+        switch type {
+        case .Insert:
+            let photo = anObject as! Photo
+            println("PHOTO \(photo.url)")
+        case .Delete:
+            collectionView.deleteItemsAtIndexPaths([indexPath!])
+        default:
+            println("TYPE \(type)")
+        }
+    }
+    
+    func controllerDidChangeContent(controller: NSFetchedResultsController) {
+        println("DID CHANGE CONTENT")
+    }
+    
     
     
     // MARK: - Remote image download
@@ -91,14 +146,12 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
     :param: photo The Photo
     */
     func getRemoteImage(cell: PhotoCell, photo: Photo) {
-        let task = cache.downloadImage(photo.url) { imageData, error in
+        let task = cache.downloadImage(photo.file) { imageData, error in
             if imageData != nil {
                 let image = UIImage(data: imageData!)
-                self.cache.storeImage(image, withIdentifier: photo.url)
-                dispatch_async(dispatch_get_main_queue()) {
-                    cell.imageView.image = image
-                    cell.activityIndicator.stopAnimating()
-                }
+                photo.saveImage(image!)
+                cell.imageView.image = image
+                cell.activityIndicator.stopAnimating()
             }
         }
         cell.taskToCancelifCellIsReused = task       
