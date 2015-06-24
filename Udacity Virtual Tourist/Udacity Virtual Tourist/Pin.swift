@@ -29,9 +29,8 @@ class Pin: NSManagedObject, MKAnnotation {
     @NSManaged var latitude: NSNumber
     @NSManaged var longitude: NSNumber
     @NSManaged var photos: [Photo]
-    
     /// What page of the results to load
-    var page = 1
+    @NSManaged var page: Int
     
     var coordinate: CLLocationCoordinate2D {
         get {
@@ -49,17 +48,19 @@ class Pin: NSManagedObject, MKAnnotation {
         
         latitude = dictionary[Keys.Latitude] as! Double
         longitude = dictionary[Keys.Longitude] as! Double
+        page = 1
     }
     
     /// Loads the photos associated with the pin
-    func loadPhotos(getNextPage: Bool = false, didCompleteSearch: (success: Bool) -> Void) {
+    func loadPhotos(getNextPage: Bool = false, didCompleteSearch: (numberFound: Int) -> Void) {
         if getNextPage {
             page++
         }
-        searchFlickr() { success in
-            didCompleteSearch(success: success)
-            
-            self.preloadPhotos()
+        searchFlickr() { count in
+            didCompleteSearch(numberFound: count)
+            if count > 0 {
+                self.preloadPhotos()
+            }
         }
     }
     
@@ -77,18 +78,18 @@ class Pin: NSManagedObject, MKAnnotation {
     
     :param: didComplete Callback when search request compeletes
     */
-    func searchFlickr(didComplete: (success: Bool) -> Void) {
+    func searchFlickr(didComplete: (numberFound: Int) -> Void) {
         let url = "\(Config.SearchURL)&lat=\(coordinate.latitude)&lon=\(coordinate.longitude)&radius=\(Config.Radius)&per_page=\(Config.Limit)&page=\(page)"
-        println(url)
         let request = NSURLRequest(URL: NSURL(string: url)!)
         let session = NSURLSession.sharedSession()
         let task = session.dataTaskWithRequest(request) { data, response, error in
             if error != nil {
-                didComplete(success: false)
+                println("Error searching Flickr \(error)")
+                didComplete(numberFound: 0)
                 return
             }
-            self.savePhotosForPin(data)
-            didComplete(success: true)
+            let count = self.savePhotosForPin(data)
+            didComplete(numberFound: count)
         }
         task.resume()
     }
@@ -98,15 +99,14 @@ class Pin: NSManagedObject, MKAnnotation {
     Builds and saves the photo url. Also adds the photo to the pin's array of photos
 
     :param: data The data returned from the request
-    :returns: True if no errrors were encountered
+    :returns: The number of photos saved
     */
-    func savePhotosForPin(data: NSData) -> Bool {
-       var success = false
+    func savePhotosForPin(data: NSData) -> Int {
+       var count = 0
         if let search = NSJSONSerialization.JSONObjectWithData(data, options: .MutableContainers, error: nil) as? NSDictionary {
             if let photoData = search["photos"] as? [String: AnyObject],
             let photos = photoData["photo"] as? [AnyObject]
             {
-                success = true
                 for photo in photos {
                     
                     let file = photo["id"] as! String
@@ -119,13 +119,14 @@ class Pin: NSManagedObject, MKAnnotation {
                     self.managedObjectContext?.save(error)
                     
                     if error != nil {
-                        success = false
+                        println("Error saving photo \(error)")
                         break
                     }
+                    count++
                 }
             }
         }
-        return success
+        return count
     }
     
     /// Downloads the photos associated with the pin

@@ -96,7 +96,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     func mapView(mapView: MKMapView!, didSelectAnnotationView view: MKAnnotationView!) {
         mapView.deselectAnnotation(view.annotation, animated: false)
         
-        // make sure the photos are loaded or loading
         let pin = view.annotation as! Pin
         performSegueWithIdentifier("showAlbum", sender: view.annotation)
     }

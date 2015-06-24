@@ -15,6 +15,7 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var newCollectionButton: UIButton!
+    @IBOutlet weak var collectionLabel: UILabel!
     
     /// The pin we are loading images for
     var pin: Pin!
@@ -44,19 +45,30 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
         var allPhotosLoaded = true
+        var noPhotosLoaded = true
+        collectionLabel.text = "Loading"
         for photo in pin.photos {
             if photo.downloadStatus != .Loaded {
                 allPhotosLoaded = false
+            } else {
+                noPhotosLoaded = false
             }
         }
-        newCollectionButton.enabled = allPhotosLoaded
+        if noPhotosLoaded {
+            dispatch_async(dispatch_get_main_queue()) {
+                self.collectionLabel.text = "No Photos Found"
+                self.collectionLabel.hidden = false
+                self.newCollectionButton.enabled = false
+            }
+        } else if allPhotosLoaded {
+            dispatch_async(dispatch_get_main_queue()) {
+                self.collectionLabel.hidden = true
+                self.newCollectionButton.enabled = true
+            }
+        }
+
     }
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-    
+   
     /// use fetched result controller to fetch
     func fetch() {
         var error = NSErrorPointer()
@@ -67,23 +79,36 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
     }
     
     func didLoadAllPhotos(sender: AnyObject) {
-        println("DID LOAD ALL PHOTOS")
         dispatch_async(dispatch_get_main_queue()) {
+            self.collectionLabel.hidden = true
             self.newCollectionButton.enabled = true
         }
     }
     
+    // Each photo posts a notificaation when it is loaded
     func didLoadPhoto(photo: Photo) {
         dispatch_async(dispatch_get_main_queue()) {
             self.collectionView.reloadData()
         }
     }
-    
+   
+    /// Load the next set of images for the pin location
     @IBAction func didPressNewCollection(sender: UIButton) {
         newCollectionButton.enabled = false
+        collectionLabel.hidden = false
         pin.deletePhotos()
-        pin.loadPhotos(getNextPage: true) { success in
-            self.fetch()
+        pin.loadPhotos(getNextPage: true) { numberFound in
+            dispatch_async(dispatch_get_main_queue()) {
+                self.collectionLabel.hidden = true
+            }
+            if numberFound > 0 {
+                self.fetch()
+            } else if self.pin.page > 1 {
+                // cycle to the first page if we didn't find any more pictures
+                self.pin.page = 0
+                CoreDataStackManager.sharedInstance().saveContext()
+                self.didPressNewCollection(self.newCollectionButton)
+            }
         }
     }
     // MARK: - Collection view datasource implementation
@@ -95,11 +120,9 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         cell.imageView.image = UIImage(named: "no-image")
         cell.activityIndicator.startAnimating()
         if let image = cache.imageWithIdentifier(photo.file) {
-            println("IMAGE IN CACHE \(photo.url)")
             cell.activityIndicator.stopAnimating()
             cell.imageView.image = image
         } else if photo.downloadStatus == .NotLoaded {
-            println("NO CACHE \(photo.url)")
             getRemoteImage(cell, photo: photo)
         }
         return cell
@@ -107,7 +130,6 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
     
     func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         let sectionInfo = self.fetchedResultsController.sections![section] as! NSFetchedResultsSectionInfo
-        println("NUM ITEM \(sectionInfo.numberOfObjects)")
         return sectionInfo.numberOfObjects
     }
     
@@ -119,46 +141,17 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         }
     }
     
-   /*
-    - (CGSize)collectionView:(UICollectionView *)collectionView
-    layout:(UICollectionViewLayout *)collectionViewLayout
-    sizeForItemAtIndexPath:(NSIndexPath *)indexPath
-    {
-    // Adjust cell size for orientation
-    if (UIDeviceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation])) {
-    return CGSizeMake(170.f, 170.f);
-    }
-    return CGSizeMake(192.f, 192.f);
-    }
-    
-    - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
-    {
-    [self.collectionView performBatchUpdates:nil completion:nil];
-    }
-   */
-    
-    override func didRotateFromInterfaceOrientation(fromInterfaceOrientation: UIInterfaceOrientation) {
-        collectionView.performBatchUpdates(nil, completion: nil)
-    }
     // MARK: - Fetched results controller
     
     func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
         switch type {
         case .Insert:
             let photo = anObject as! Photo
-            println("PHOTO \(photo.url)")
         case .Delete:
             collectionView.deleteItemsAtIndexPaths([indexPath!])
-        default:
-            println("TYPE \(type)")
+        default: ()
         }
     }
-    
-    func controllerDidChangeContent(controller: NSFetchedResultsController) {
-        println("DID CHANGE CONTENT")
-    }
-    
-    
     
     // MARK: - Remote image download
     /**
