@@ -24,7 +24,7 @@ class Photo: NSManagedObject {
    
     struct Config {
         static let flickrURLTemplate = ["https://farm", "{farm-id}", ".staticflickr.com/", "{server-id}", "/", "{id}", "_", "{secret}", "_z.jpg"]
-        static let PhotoLoadedForPinNotification = "PhotoLoadedForPinNotification"
+        static let PhotoLoadedNotification = "PhotoLoadedNotification"
     }
     
     /// Whether all the photo has been downloaded
@@ -79,7 +79,7 @@ class Photo: NSManagedObject {
     func saveImage(image: UIImage) {
         ImageCache.Static.instance.storeImage(image, withIdentifier: file)
         downloadStatus = .Loaded
-        NSNotificationCenter.defaultCenter().postNotificationName(Config.PhotoLoadedForPinNotification, object: self)
+        NSNotificationCenter.defaultCenter().postNotificationName(Config.PhotoLoadedNotification, object: self)
     }
     
     func delete() {

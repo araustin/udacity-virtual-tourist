@@ -24,7 +24,6 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
         
         fetchedResultsController.delegate = self
         fetch()
@@ -32,8 +31,14 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         collectionView.delegate = self
         collectionView.dataSource = self
         
+        // Notfications for image loading
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "didLoadAllPhotos:", name: Pin.Config.AllPhotosLoadedForPinNotification, object: pin)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "didLoadPhoto:", name: Photo.Config.PhotoLoadedForPinNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "didLoadPhoto:", name: Photo.Config.PhotoLoadedNotification, object: nil)
+        
+        // add the map pin
+        mapView.addAnnotation(pin)
+        centerMapOnLocation(pin.coordinate)
+        
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -63,17 +68,14 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
     
     func didLoadAllPhotos(sender: AnyObject) {
         println("DID LOAD ALL PHOTOS")
-        newCollectionButton.enabled = true
-        collectionView.layoutSubviews()
-        collectionView.reloadData()
+        dispatch_async(dispatch_get_main_queue()) {
+            self.newCollectionButton.enabled = true
+        }
     }
     
     func didLoadPhoto(photo: Photo) {
-        if let indexPath = fetchedResultsController.indexPathForObject(photo) {
-            dispatch_async(dispatch_get_main_queue()) {
-                println("PHOTO LOAD \(photo.file)")
-                self.collectionView.reloadItemsAtIndexPaths([indexPath])
-            }
+        dispatch_async(dispatch_get_main_queue()) {
+            self.collectionView.reloadData()
         }
     }
     
@@ -82,9 +84,6 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         pin.deletePhotos()
         pin.loadPhotos(getNextPage: true) { success in
             self.fetch()
-            dispatch_async(dispatch_get_main_queue()) {
-                self.collectionView.reloadData()
-            }
         }
     }
     // MARK: - Collection view datasource implementation
@@ -120,6 +119,29 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         }
     }
     
+   /*
+    - (CGSize)collectionView:(UICollectionView *)collectionView
+    layout:(UICollectionViewLayout *)collectionViewLayout
+    sizeForItemAtIndexPath:(NSIndexPath *)indexPath
+    {
+    // Adjust cell size for orientation
+    if (UIDeviceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation])) {
+    return CGSizeMake(170.f, 170.f);
+    }
+    return CGSizeMake(192.f, 192.f);
+    }
+    
+    - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+    {
+    [self.collectionView performBatchUpdates:nil completion:nil];
+    }
+   */
+    
+    override func didRotateFromInterfaceOrientation(fromInterfaceOrientation: UIInterfaceOrientation) {
+        collectionView.performBatchUpdates(nil, completion: nil)
+    }
+    // MARK: - Fetched results controller
+    
     func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
         switch type {
         case .Insert:
@@ -152,6 +174,11 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
                 photo.saveImage(image!)
                 cell.imageView.image = image
                 cell.activityIndicator.stopAnimating()
+            } else {
+                dispatch_async(dispatch_get_main_queue()) {
+                    println("error downloading image \(error)")
+                    photo.delete()
+                }
             }
         }
         cell.taskToCancelifCellIsReused = task       
@@ -180,5 +207,15 @@ class AlbumViewController: UIViewController, UICollectionViewDataSource, UIColle
         return CoreDataStackManager.sharedInstance().managedObjectContext!
     }
  
+    // MARK: - Map view convenience method
+
+    /**
+    Center the map on a location. From the raywenderlich.com tutorial
+    :param: location The location to center the map
+    */
+    func centerMapOnLocation(coordinate: CLLocationCoordinate2D) {
+        let coordinateRegion = MKCoordinateRegionMakeWithDistance(coordinate, 2000, 2000)
+        mapView.setRegion(coordinateRegion, animated: true)
+    }
 }
 

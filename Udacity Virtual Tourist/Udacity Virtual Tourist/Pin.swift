@@ -22,7 +22,7 @@ class Pin: NSManagedObject, MKAnnotation {
     struct Config {
         static let SearchURL = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=fab57d67573d42d644953ca8b54c7f6e&format=json&nojsoncallback=1"
         static let Radius = 1 /* kilometers */
-        static let Limit = 20
+        static let Limit = 12
         static let AllPhotosLoadedForPinNotification = "AllPhotosLoadedForPinNotification"
     }
     
@@ -59,10 +59,7 @@ class Pin: NSManagedObject, MKAnnotation {
         searchFlickr() { success in
             didCompleteSearch(success: success)
             
-            let priority = DISPATCH_QUEUE_PRIORITY_DEFAULT
-            dispatch_async(dispatch_get_global_queue(priority, 0)) {
-                self.preloadPhotos()
-            }
+            self.preloadPhotos()
         }
     }
     
@@ -141,6 +138,7 @@ class Pin: NSManagedObject, MKAnnotation {
                 
                 // keep track of the loaded photos
                 unloadedPhotos--
+                
                 if imageData == nil {
                     return
                 }
